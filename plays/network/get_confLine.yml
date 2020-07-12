@@ -7,7 +7,7 @@
    tasks:
    - name: FIND LINE
      ios_command:
-       commands: show run | i "{{the_line}}"
+       commands: "show run | i {{the_line}}"
      register: sh
 
    - set_fact:
