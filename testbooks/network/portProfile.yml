@@ -3,7 +3,7 @@
    hosts:
    gather_facts: no
    vars_files:
-     - willlist.yml
+     - 
    tasks:
    - name: GET IOS FACTS
      ios_facts:
