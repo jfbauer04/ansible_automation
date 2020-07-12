@@ -3,15 +3,15 @@
    hosts:
    vars_files: ../../vault
    vars:
-    old_admin:
+    old_admin: 
     new_admin:
 
    tasks:
    - name: REMOVE OLD ADMIN WHEN PRESENT
      ios_user:
-       name:
+       name: "{{old_admin}}"
        state: absent
-     when: old_admin == None
+     when: old_admin != None
 
    - name: CREATE NEW ADMIN/CHANGE PASSWORD
      ios_user:
