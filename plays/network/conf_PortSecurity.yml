@@ -1,0 +1,49 @@
+---
+ - name: Enable Port Security
+   hosts:
+   connection: network_cli
+   gather_facts: no
+
+   tasks:
+#   - name: GATHER INTERFACES
+#     ios_facts:
+#       gather_subset: 'interfaces'
+#   - debug:
+#       msg: "{{item}}"
+#     with_items: "{{ansible_net_interfaces}}"
+
+   - name: BACKUP CURRENT CONFIG
+     ios_config:
+       backup: yes
+       backup_options:
+         dir_path: "/etc/ansible/output/backups"
+         filename: "{{inventory_hostname}}"
+   - name: CONFIGURE ERR DISABLE
+     ios_config:
+       lines:
+         - errdisable recovery cause psecure-violation
+         - errdisable recovery interval 180
+       save_when: always
+       running_config: "/etc/ansible/output/parking/{{inventory_hostname}}"
+
+   - name: SECURE THE PORTS
+     ios_config:
+       lines:
+         - switchport mode access
+         - switchport port-security
+         - switchport port-security mac-address sticky
+         - switchport port-security violation shutdown
+         - switchport port-security maximum 2
+
+       save_when: always
+       parents: "interface range GigabitEthernet1/1-24"
+#       diff_against: "/etc/ansible/output/parking/{{inventory_hostname}}"
+       running_config: "/etc/ansible/output/parking/{{inventory_hostname}}"
+#     with_items: "{{ansible_net_interfaces}}"
+
+   - name: VERIFY PORT SECURITY
+     ios_command:
+       commands: show port-security
+     register: pSecurity
+   - debug:
+       msg: "{{pSecurity.stdout_lines}}"

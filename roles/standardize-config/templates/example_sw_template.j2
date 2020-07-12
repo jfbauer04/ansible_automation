@@ -1,0 +1,29 @@
+username {{vault_admin}} privilege 15 secret {{vault_adminPass}}
+enable secret {{vault_enablePass}}
+
+aaa new-model
+aaa group server radius NPS
+
+radius server NPS
+ address ipv4 {{vault_v4RaidusServer}} auth-port 1645 acct-port 1646
+ timeout 3
+ retransmit 2
+ key 7 {{vault_radiusKey}}
+
+clock timezone GMT 0
+ntp server {{ntp_v4}} prefer
+ntp server {{ntpBackup_v4}}
+vtp mode transparent
+
+ip ssh authentication-retries 3
+ip ssh version 2
+no ip http server
+no ip http secure-server
+{% if '3...' != ansible_net_model and switch in group_name %}
+no ip routing
+{%endif%}
+
+logging buffered 500000
+logging rate-limit 10 except critical
+no logging console
+service password-encryption

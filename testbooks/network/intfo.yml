@@ -1,0 +1,51 @@
+---
+ - name: TIRED OF QUARANTINE
+   hosts:
+   gather_facts: no
+   vars:
+     fileOut: /etc/ansible/output/vlan-list.csv
+   tasks:
+   - name: GET THE INTS
+     ios_command:
+       commands: show int switchport
+     register: swp
+
+   - set_fact:
+        intlist: []
+
+   - set_fact:
+       intlist: "{{intlist + [item]}}"
+     with_items: "{{swp.stdout[0] | parse_cli('spec.yml')}}"
+     when:
+       - "item.access_vlan != None"
+       - "item.name not in intlist"
+   - debug:
+       msg: "{{intlist }}"
+
+   - name: CREATE INVENTORY FILES
+     file:
+       path: "{{ fileOut }}"
+       state: touch
+     delegate_to: localhost
+     run_once: yes
+
+   - name: CREATE CSV HEADERS
+     lineinfile:
+       path: "{{ fileOut }}"
+       line: 'host,ip,int,admin state,oper state, access vlan,'
+       insertafter: HOF
+     delegate_to: localhost
+     run_once: yes
+
+   - name: APPEND DATA
+     lineinfile:
+       path: "{{ fileOut }}"
+       line:  '{{inventory_hostname}},{{ansible_host}},{{item.name}},{{item.admin_mode}},{{item.op_mode}},{{item.access_vlan}}'
+       insertafter: EOF
+     with_items: "{{intlist }}"
+     when:
+       - "item.access_vlan == '1 (default)'"
+       - "item.op_mode != 'trunk'"
+       - "item.access_vlan != 'trunk'"
+
+     delegate_to: localhost

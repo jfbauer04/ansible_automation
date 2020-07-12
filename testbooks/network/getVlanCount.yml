@@ -1,0 +1,37 @@
+---
+ - name: Get Count of Active VLANS Per Port
+   hosts:
+   tasks:
+   - name: GET INT STATUS
+     ios_command:
+       commands: show int switchport | ex notconn
+     register: upPorts
+
+   - set_fact:
+       ints: []
+       vList: []
+
+   - set_fact:
+       ints: "{{ints + [item]}}"
+     with_dict: "{{ upPorts.stdout[0] | parse_cli('../../specFiles/switchport.yml' )}}"
+     when: " item.value.access_vlan is defined"
+
+   - debug:
+       msg: "{{item}}"
+     with_items: "{{ints}}"
+#     when:
+#       - "item.value.access_vlan is defined"
+#       - "item.access_vlan not in vList"
+#
+   - set_fact:
+      vList: "{{vList + [item.value.access_vlan]}}"
+     with_dict: "{{ints}}"
+     when:
+#      - "item.value.access_vlan != 'None'"
+      - "item.value.access_vlan is defined"
+   - debug:
+       msg: "{{ints | selectattr('access_vlan','equalto',item) | list | count }}"
+     with_items: "{{vList}}"
+     when:
+#       - "item.value.access_vlan is defined"
+#       - "item.access_vlan != ''"

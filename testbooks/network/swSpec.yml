@@ -1,0 +1,16 @@
+---
+ - name: Test Spec File
+   gather_facts: no
+   hosts:
+
+   tasks:
+
+
+   - name: GET THE INTS
+     ios_command:
+       commands: show int switchport
+     register: swp
+
+   - debug:
+       msg: "{{item}}"
+     with_items: "{{swp.stdout[0] | parse_cli('/etc/ansible/specFiles/switchport.yml')}}"

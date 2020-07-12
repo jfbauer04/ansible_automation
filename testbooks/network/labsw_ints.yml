@@ -1,0 +1,11 @@
+switches:
+ LabSwitch:
+  - name: GigabitEthernet1/0/16
+    state: shutdown
+    mode: access
+  - name: GigabitEthernet1/0/17
+    state: shutdown
+    mode: access
+  - interface: GigabitEthernet1/0/18
+    state: shutdown
+    mode: access

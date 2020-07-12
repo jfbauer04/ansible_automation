@@ -1,0 +1,21 @@
+---
+ - name: find switches with a config line
+   hosts:
+   gather_facts: no
+   vars:
+    the_line: logging host 1.1.1.1
+   tasks:
+   - name: FIND LINE
+     ios_command:
+       commands: show run | i "{{the_line}}"
+     register: sh
+
+   - set_fact:
+       theList: []
+   - set_fact:
+       theList: + "{{ theList +  [sh.stdout[0] ]}}"
+     when: "sh.stdout != ''"
+
+   - debug:
+       msg: "{{item}}"
+     with_items: "{{theList}}"

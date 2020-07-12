@@ -1,0 +1,42 @@
+---
+ - name: Get List of Ports per VLAN
+   hosts:
+   gather_facts: no
+
+   tasks:
+   - name: GET VLANS
+     ios_command:
+       commands: show vlan
+     register: raw_vlan
+
+   - set_fact:
+       vlans: "{{raw_vlan.stdout_lines}}"
+
+   - debug:
+       msg: '{{(item | regex_search("((Gi|Te).*\/.*\/.*)$")).split(", ") | length}}'
+     with_items: "{{vlans}}"
+
+   - set_fact:
+       fileOut: '/etc/ansible/output/vlan-list.csv'
+
+   - name: CREATE INVENTORY FILES
+     file:
+       path: "{{ fileOut }}"
+       state: touch
+     delegate_to: localhost
+     run_once: yes
+
+   - name: CREATE CSV HEADERS
+     lineinfile:
+       path: "{{ fileOut }}"
+       line: 'host,ip,vlan,name,state,IP address'
+       insertafter: HOF
+     delegate_to: localhost
+     run_once: yes
+
+   - name: APPEND DATA
+     lineinfile:
+       dest: "{{ fileOut }}"
+       line:  '{{inventory_hostname}},{{ansible_host}}, {{item | regex_replace ("[\s]{2,}", "~")| regex_replace (",", " ")| regex_replace ("~", ",")}},'
+     with_items: "{{vlans}}"
+     when: "'active' in item"

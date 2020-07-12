@@ -1,0 +1,12 @@
+---
+ - name: Traceroute on Switches
+   hosts:
+   vars:
+     - dest_ip: 8.8.8.8
+   tasks:
+   - name: traceroute
+     ios_command:
+       commands: "traceroute {{dest_ip}}"
+     register: trace
+   - debug:
+       msg: "{{trace.stdout_lines}}"

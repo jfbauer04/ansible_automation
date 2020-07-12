@@ -1,0 +1,52 @@
+---
+ - name: Find Mac Addresses
+   hosts:
+   gather_facts: no
+   connection: network_cli
+   vars_files:
+     - /etc/ansible/vault
+
+   vars:
+     ansible_user: "{{vault_admin}}"
+     ansible_ssh_pass: "{{vault_adminPass}}"
+     oui:
+     fileOut: "/etc/ansible/output/ups_list.csv"
+
+
+   tasks:
+   - name: CREATE OUTPUT FILE
+     file:
+       path: "{{ fileOut }}"
+       state: touch
+     delegate_to: localhost
+     run_once: true
+
+   - name: CREATE CSV HEADERS
+     lineinfile:
+       path: "{{ fileOut }}"
+       line: "Switch IP,UPS Mac Address,vlan,interface"
+       insertafter: HOF
+     delegate_to: localhost
+     run_once: true
+
+   - name: gather mac tables info
+     ios_command:
+       commands: "show mac address-table | inc {{oui}}.*(Gi|Fa|Eth)"
+     register: mtable
+
+   - debug:
+       msg: "{{item}}"
+     with_items: "{{mtable.stdout_lines}}"
+
+   - name: APPEND DATA
+     lineinfile:
+       dest: "{{ fileOut }}"
+       line:  "{{inventory_hostname}},{{item.split()[1]}},{{item.split()[0]}},{{item.split()[3]}}"
+     with_items: "{{mtable.stdout_lines}}"
+     when: "item.split()[1] is defined"
+
+   - name: NONE FOUND
+     lineinfile:
+       dest: "{{ fileOut }}"
+       line: "{{inventory_hostname}}, , , "
+     when: "mtable == ''"

@@ -1,0 +1,21 @@
+---
+- name: EXPAND SOFTWARE
+  ios_command:
+     commands:
+       - command: "software expand file flash:{{new_bin}}.bin"
+  when: "'16.' not in ansible_net_version"
+
+- name: INSTALL SOFTWARE ON 16.x
+  ios_command:
+     commands:
+       - command:  "request platform software package expand switch all file flash:{{new_bin}}.bin"
+  when: "'16.' in ansible_net_image"
+
+- name: CONFIGURE BOOT SETTINGS
+  ios_config:
+    lines:
+      - "no boot system"
+      - "boot system switch all flash:{{ new_bin }}.conf"
+    save_when: always
+
+

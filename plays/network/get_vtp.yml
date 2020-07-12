@@ -1,0 +1,14 @@
+---
+ - name: Get VTP Status of Switches
+   hosts:
+   gather_facts: no
+
+   tasks:
+   - ios_command:
+       commands: show vtp status
+     register: vtpOut
+ 
+   - debug:
+       msg: "{{item}}"
+     with_items: " {{inventory_hostname}} = {{vtpOut.stdout_lines}}"
+     when: "'Domain Name' in item or 'Operating Mode' in item"

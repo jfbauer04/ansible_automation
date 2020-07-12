@@ -1,0 +1,71 @@
+---
+# tasks file for upgrade-switch
+- name: CONTINUE UPGRADE
+  block:
+  - name: CLEAN UNNECESSARY PACKAGES (Pre Denali)
+    ios_command:
+      commands: "software clean\nyes"
+    when: "'03.0' in ansible_net_version"
+
+  - name: CLEAN UNNECESSARY PACKAGES (Denali and Up)
+    ios_command:
+      commands:
+          - command: "request platform software package clean switch all"
+            prompt: "^.*"
+            answer: "y\r"
+    when: "'16.0' in ansible_net_version"
+
+  - name: CHECK IF IMAGE EXISTS ON SYSTEM
+    ios_command:
+      commands: "dir flash:"
+    register: dirOut
+
+  - name: TRANSFER IMAGE
+    ios_command:
+      commands:
+        - command: 'copy ftp://ansible:{{vault_ftpPass}}@{{repo}}/images/{{ new_bin }}.bin flash:'
+          prompt: "^.*"   #"Destination filename \\[{{ new_bin }}\\]?"
+          answer: "\r"
+
+    async: 900
+    poll: 10
+    when: "new_bin not in dirOut.stdout"
+
+  - name: COPY IMAGE TO STACKED SWITCHES WHEN PRESENT
+    ios_command:
+     commands:
+        - command: "copy flash:{{new_bin}}.bin flash{{item.0 + 2}}:"
+          prompt: '^.*'
+          answer: "\r"
+    with_indexed_items: "{{ansible_net_stacked_serialnums[1:]}}"
+    when: "stack_size > 1"
+
+  - name: VERIFY CHECKSUM
+    ios_command:
+      commands:
+        - "verify /md5 flash:{{new_bin}}.bin"
+      wait_for:
+        - result[0] contains "{{checksum}}"
+      retries: 1
+
+  - name: CONFIGURE BOOT SETTINGS
+    ios_config:
+      lines:
+        - "no boot system"
+        - "boot system switch all flash:{{ new_bin }}.bin"
+      save_when: always
+    when: "'C3850' != found_model"
+  - include_tasks: 3850.yml
+
+  - name: RELOAD SWITCH
+    ios_command:
+      commands:
+        - "reload in 1\ny"
+    async: 1050
+    poll: 10
+
+#  - name: WAIT FOR SWITCH TO RETURN
+#    retries: 6
+#    wait_for_connection:
+#       delay: 860
+#       timeout: 800

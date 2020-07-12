@@ -1,0 +1,15 @@
+---
+ - name: Gather Junos Router Facts
+   gather_facts: no
+   hosts: junos_rt
+   tasks:
+   - name: Enable NETCONF
+     connection: network_cli
+     junos_netconf:
+     when: ansible_network_os == 'junos'
+
+   - name: gettem
+     junos_facts:
+       gather_subset: config
+   - debug:
+      msg: "{{ansible_facts}}"

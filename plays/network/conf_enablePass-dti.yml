@@ -1,0 +1,22 @@
+---
+ - name: Update IOS Admin User
+   hosts:
+   vars_files: ../../vault
+   vars:
+    old_admin:
+    new_admin:
+
+   tasks:
+   - name: REMOVE OLD ADMIN WHEN PRESENT
+     ios_user:
+       name:
+       state: absent
+     when: old_admin == None
+
+   - name: CREATE NEW ADMIN/CHANGE PASSWORD
+     ios_user:
+       name: "{{new_admin}}"
+       configured_password: "{{vault_adminPass}}"
+       update_password: always
+       password_type: secret
+       state: present

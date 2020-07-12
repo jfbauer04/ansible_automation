@@ -1,0 +1,25 @@
+sw_models:
+  C2960S:
+    new_bin: c2960s-universalk9-mz.152-2.E9
+    new_version: 15.2(2)E9
+    checksum: ea604d030b378b6c5c3dda3d501ac2f5
+
+  C2960X:
+    new_bin: c2960x-universalk9-mz.152-7.E0a
+    new_version: 15.2.7E0a
+    checksum: 56754cd55e42d84acea5dfd1628d99b9
+
+  C3560X:
+    new_bin: c3560e-universalk9-mz.152-4.E9
+    new_version: 15.2.4E9
+    checksum:
+
+  C3750X:
+    new_bin: c3750e-universalk9-mz.152-4.E9
+    new_version: 15.2.4E9
+    checksum: 190145665030086393de15489689a1cf
+
+  C3850:
+    new_bin: cat3k_caa-universalk9.16.09.04.SPA
+    new_version: 16.09.04
+    checksum: bf139ef01e88f16bf9e54c7120830eab

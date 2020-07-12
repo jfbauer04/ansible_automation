@@ -1,0 +1,39 @@
+---
+
+- name: GATHER SWITCH FACTS FOR VERIFICATION
+  ios_facts:
+- debug:
+    msg: "The new IOS version is {{ ansible_net_version }}"
+
+- name: SHOW SWITCH AFTER
+  ios_command:
+    commands: show switch detail
+  register: sw_new
+
+- set_fact:
+   sw_nwq: "{{sw_new['stdout_lines'] | flatten | join('\n')}}"
+
+- name: SHOW INT STATUS AFTER
+  ios_command:
+    commands: show int status
+  register: int_new
+
+- set_fact:
+   int_nwq: "{{int_new['stdout_lines'] | flatten | join('\n')}}"
+
+- set_fact:
+   int_new: "no diffs to show"
+  when: int_new == int_old
+
+- name: EMAIL NEW CONFIG
+  mail:
+   host:
+   port:
+   username: "Ansible"
+   from:
+   password:
+   to:
+   subject: Upgrade Report  "{{ansible_net_hostname}}  ({{ansible_host}})"
+   body: "show switch detail:\n{{sw_nwq }}\n\nshow int status:\n{{int_nwq}}"
+
+# tasks file for post-upgrade-switch

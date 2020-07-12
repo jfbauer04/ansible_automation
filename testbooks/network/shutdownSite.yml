@@ -1,0 +1,42 @@
+---
+ - name: SHUTDOWN ALL ACCESS PORTS
+   hosts: LabSwitch
+   gather_facts: no
+   vars_files:
+    - exemptVlans.yml
+
+   tasks:
+   - name: GET THE INTS
+     ios_command:
+       commands: show int switchport
+     register: swp
+
+   - set_fact:
+        intlist: []
+
+   - set_fact:
+       intlist: "{{intlist + [item]}}"
+     with_dict: "{{swp.stdout[0] | parse_cli('../../specFiles/switchport.yml')}}"
+     when:
+       - "item.value.access_vlan != None"
+       - "item.value.name not in intlist"
+
+   - debug:
+       msg: "{{intlist }}"
+
+   - name: BACKUP CONFIG
+     ios_config:
+       backup: yes
+     register: running_config
+
+
+   - set_fact:
+       conf_intended: "{{lookup('template','../../shutInterfaces.j2')}}"
+
+   - debug:
+       msg: "{{conf_intended}}"
+
+   - name: SHUTDOWN ACCESS PORTS
+     ios_config:
+       src: '../../shutInterfaces.j2'
+       save_when: never

@@ -1,0 +1,7 @@
+{% for i in (intlist | unique) %}
+{% if i.value.admin_mode == 'static access' and ( i.value.access_vlan.split(' ')[0] not in exempt) %}
+interface {{i.key}}
+ shutdown
+!
+{%endif%}
+{%endfor%}

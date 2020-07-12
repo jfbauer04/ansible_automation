@@ -1,0 +1,36 @@
+---
+ - name: Meet the Neighbors
+   hosts: 
+   gather_facts: no
+
+   tasks:
+   - name: SH CDP
+     ios_command:
+       commands: sh cdp neigh det
+     register: neighbors
+
+   - name: GET THE INTS
+     ios_command:
+       commands: show int switchport
+     register: swp
+
+   - set_fact:
+        intlist: []
+
+   - set_fact:
+       intlist: "{{intlist + [item]}}"
+     with_dict: "{{swp.stdout[0] | parse_cli('/etc/ansible/specFiles/switchport.yml')}}"
+     when:
+       - "item.value.access_vlan != None"
+       - "item not in intlist"
+   - debug:
+       msg: "{{item}}"
+     with_items: "{{intlist}}"
+
+   - debug:
+       msg: "{{(intlist | items2dict)[item.switchport].access_vlan}}"
+     with_items: "{{neighbors.stdout[0] | parse_cli('/etc/ansible/specFiles/cdpNeighbors.yml')}}"
+     when:
+        - " 'IP Phone' in  item.platform"
+        - " item.secondport_status == 'Down'"
+        - "item.switchport in intlist"

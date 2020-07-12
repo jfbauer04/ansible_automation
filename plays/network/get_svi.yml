@@ -1,0 +1,39 @@
+---
+ - name: Get SVIs configured on a device
+   hosts:
+   gather_facts: no
+   vars:
+     - fileOut: "/etc/ansible/output/SVIs.csv"
+   tasks:
+   - name: GET THE FACTS
+     ios_facts:
+       gather_subset: interfaces
+
+   - debug:
+       msg: "{{item.value}}"
+     loop: "{{ansible_net_interfaces | dict2items}}"
+#     when: "'Vlan' in item"
+
+   - name: CREATE INVENTORY FILES
+     file:
+       path: "{{inventory_hostname}}-{{ fileOut }}"
+       state: touch
+     delegate_to: localhost
+     run_once: yes
+
+   - name: CREATE CSV HEADERS
+     lineinfile:
+       path: "{{inventory_hostname}}-{{ fileOut }}"
+       line: "VLAN ID,Description,state,IP addr"
+       insertafter: HOF
+     delegate_to: localhost
+     run_once: yes
+
+   - name: APPEND DATA
+     lineinfile:
+       dest: "{{ fileOut }}"
+       line:  '{{item.key}},{{item.value.description}},{{item.value.operstatus}},{{item.value.ipv4[0].address}}/{{item.value.ipv4[1].subnet}}'
+     loop: "{{ansible_net_interfaces | dict2items}}"
+#     when: "'Vlan' in item.key and  item.value.ipv4 != ''"
+     when: "item['value'] != '' and 'Vlan' in item['key'] and 'ipv4' in item['value'] and item['value']['ipv4'] != []"
+     delegate_to: localhost

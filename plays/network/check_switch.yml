@@ -1,0 +1,55 @@
+---
+ - name: configure
+   hosts: switch
+   connection: network_cli
+   gather_facts: no
+
+   tasks:
+   - name: DEFINE CONNECTION
+     set_fact:
+       connection:
+         host: "{{ ansible_host }}"
+
+   - name: GATHER IOS FACTS
+     ios_facts:
+       gather_subset: all
+
+   - name: SHOW SWITCH
+     ios_command:
+       commands: show switch detail
+     register: sw
+
+   - name: SHOW INT STATUS
+     ios_command:
+       commands: show int status
+     register: int
+   - set_fact:
+      int: "{{int['stdout_lines'] | flatten | join('\n')}}"
+   - set_fact:
+      int: "no diffs to show"
+     when: int == int
+#   - set_fact:
+#       fileOut: "/etc/ansible/output/configs/{{ ansible_facts['net_hostname'] }}.txt"
+#   - name: CREATE INVENTORY FILES
+#     file:
+#       path: "{{ fileOut }}"
+#       state: touch
+
+ #  - name: APPEND DATA
+ #    copy:
+ #      dest: "{{ fileOut }}"
+ #      content: "{{ ansible_facts['net_config'] }}"
+       #insertafter: EOF
+ #    delegate_to: localhost
+
+   - name: EMAIL NEW CONFIG
+     mail:
+       host:
+       port: 25
+       username: "Ansible"
+       from:
+       password:
+       to:
+       subject: Upgrade Report  "{{ansible_net_hostname}}  ({{ansible_host}})" (Test)
+       body: "show switch detail:\n{{sw['stdout_lines'] | flatten | join('\n') }}\n\nshow int status:\n{{int}}"
+     delegate_to: localhost

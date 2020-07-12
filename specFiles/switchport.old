@@ -1,0 +1,23 @@
+---
+vars: 
+  interface: 
+    name: "{{ item[0].name }}"
+    switchport: "{{ item[1].switchport }}"
+    admin_mode: "{{ item[2].admin_mode }}"
+    op_mode: "{{ item[3].op_mode }}"
+    access_vlan: "{{item[4].access_vlan}}"
+
+keys:
+   interfaces:
+     value: "{{interface}}"
+     start_block: "^Name.*$"
+     end_block: "^$"
+     items: 
+       - "^Name: (?P<name>.*)"
+       - "Switchport: (?P<switchport>.*)"
+       - "Administrative Mode: (?P<admin_mode>.*)"
+       - "Operational Mode: (?P<op_mode>.*)"
+       - "Access Mode VLAN: (?P<access_vlan>.*)"
+
+
+

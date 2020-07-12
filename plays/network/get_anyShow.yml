@@ -1,0 +1,29 @@
+---
+ - name: Quick Troubleshooting Playbook
+   hosts: all
+   gather_facts: no
+   vars_prompt:
+     - name: cmd
+       prompt: "Enter a command"
+       private: no
+     - name: fileOut
+       prompt: "Name your output file"
+       private: no
+
+   tasks:
+   - name: RUN COMMAND
+     ios_command:
+       commands: "{{cmd}}"
+     register: cmdOut
+
+   - name: CREATE OUTPUT FILE (in /etc/ansible/output)
+     file:
+       path: "/home/ansible/output/{{fileOut}}"
+       state: touch
+
+   - name: OUTPUT TO FILE
+     lineinfile:
+       dest: "/home/ansible/output/{{fileOut}}"
+       line: "{{inventory_hostname}} output:\r\n     {{cmdOut.stdout_lines | flatten |  join('\r\n     ')}}\r\n##################################################################"
+       insertafter: EOF
+     delegate_to: localhost

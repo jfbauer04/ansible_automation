@@ -1,0 +1,23 @@
+---
+ - name: Apply an Int Profile
+   hosts:
+   gather_facts: no
+   vars_files:
+     - willlist.yml
+   tasks:
+   - name: GET IOS FACTS
+     ios_facts:
+
+   - set_fact:
+       conf_intended: "{{lookup('template','./int_template.j2')}}"
+
+   - debug:
+       msg: "{{conf_intended}}"
+
+   - name: BACKUP CONFIG
+     ios_config:
+       backup: yes
+
+   - name: APPLY INT PROFILE
+     ios_config:
+     src: '../../templates/int_template.j2'

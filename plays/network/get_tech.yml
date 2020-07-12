@@ -1,0 +1,21 @@
+---
+ - name: get show Tech
+   hosts: tacHosts
+   gather_facts: no
+
+   tasks:
+   - name: SHOW TECH
+     ios_command:
+       commands: show tech
+     register: tech
+   - name: CREATE INVENTORY FILES
+     file:
+       path: "/etc/ansible/output/show_tech.txt"
+       state: touch
+
+   - name: OUTPUT TO FILE
+     lineinfile:
+       dest: /etc/ansible/output/show_tech.txt
+       line: "{{tech.stdout_lines | flatten |  join('\n')}}\n##################################################################"
+       insertafter: EOF
+     delegate_to: localhost

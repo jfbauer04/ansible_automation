@@ -1,0 +1,47 @@
+---
+# tasks file for check-switch
+- debug:
+    msg: "{{group_names}}\n{{new_bin}}"
+
+- name: GATHER SWITCH FACTS
+  ios_facts:
+
+- name: STORE FOUND MODEL
+  set_fact: 
+    found_model: "{{ansible_net_model.split('-')[1]}}"
+
+- debug: 
+    msg: "{{sw_models[found_model]['new_version']}}"
+- debug: 
+    msg: "the version matches"
+  when: "sw_models[found_model]['new_version'] in ansible_net_version"
+
+- name: STORE NEW VERSION INFORMATION
+  set_fact:  
+    new_bin: "{{sw_models[found_model]['new_bin']}}"
+    new_version: "{{sw_models[found_model]['new_version']}}"
+    checksum: "{{sw_models[found_model]['checksum']}}"
+
+- name: STORE STACK SIZE 
+  set_fact:
+    stack_size: "{{ ansible_net_stacked_serialnums | length }}"
+
+- name: SHOW SWITCH BEFORE UPGRADE
+  block:
+  - ios_command:
+      commands: show switch detail
+    register: sw_old
+
+  - set_fact:
+      sw_old: "{{sw_old['stdout_lines'] | flatten | join('\n')}}"
+
+- name: SHOW INT STATUS BEFORE UPGRADE
+  block:
+  - ios_command:
+      commands: show int status
+    register: int_old
+
+  - set_fact:
+      int_old: "{{int_old['stdout_lines'] | flatten | join('\n')}}"
+
+

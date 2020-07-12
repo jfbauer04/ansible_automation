@@ -1,0 +1,19 @@
+---
+ - name: Add Mac Addresses to a WLC
+   hosts:
+   gather_facts: no
+   connection: local
+   vars:
+    ansible_ssh_pass: '{{vault_adminPass}}'
+    ansible_user: "{{vault_admin}}"
+    ssid: 123
+    vlan_id: 123
+   vars_files:
+     - /etc/ansible/vault
+
+   tasks:
+   - name: add the mac
+     aireos_config:
+       lines: "macfilter add "{{item}}"  {{ssid}} vlan{{vlan_id}}"
+       save_when: always
+     with_items: macList

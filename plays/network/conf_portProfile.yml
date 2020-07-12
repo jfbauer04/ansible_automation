@@ -1,0 +1,26 @@
+---
+ - name: CONFIGURE PORTS BASED ON PROFILE PER PROFILE
+   hosts: 
+   vars_files:
+     - ../../vars/xyzProfile.yml
+
+   tasks:
+   - name: BACKUP CONFIG
+     ios_config:
+       backup: yes
+     register: running_config
+
+   - debug:
+       msg: "{{item}}"
+     with_items: "{{switches[inventory_hostname]}}"
+  #configure a list of interfaces per switch stored in your profile yaml file
+   - ios_config:
+       lines:  "{{item.config_line}}"
+       parents: "interface {{item.interface}}"
+       save_when: never
+       defaults: no
+       running_config: "{{ lookup('file', running_config.backup_path) }}"
+     with_items: "{{switches[inventory_hostname]}}"
+
+   - ios_config:
+       save_when: always

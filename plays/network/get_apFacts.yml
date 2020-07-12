@@ -1,0 +1,49 @@
+---
+ - name: show access points
+   hosts:
+   gather_facts: no
+   connection: local
+   vars:
+    ansible_ssh_pass: '{{vault_adminPass}}'
+    ansible_user: '{{vault_adminUser}}'
+   vars_files:
+     - ../../vault
+
+
+   tasks:
+   - name: CREATE INVENTORY FILES
+     file:
+       path: "{{ fileOut }}"
+       state: touch
+
+   - name: CREATE CSV HEADERS
+     lineinfile:
+       path: "{{ fileOut }}"
+       line: "AP Name,Slots,AP Model,Ethernet MAC,Location,Country,IP Address,Clients"
+       insertafter: HOF
+     delegate_to: localhost
+
+   - name: show aps
+     aireos_command:
+       commands:
+         - show ap summary
+     register: show
+
+   - set_fact:
+       out: "{{ show.stdout_lines|flatten }}"
+
+   - debug: msg= "{{ item|to_yaml|from_yaml }}"
+     loop: "{{ out[7:] }}"
+     loop_control:
+       index_var: index
+
+   - name: APPEND DATA
+     lineinfile:
+       dest: "{{ fileOut }}"
+       line: '{{ item | regex_replace ("[\s]{2,}", ",") }}'
+       insertafter: EOF
+     loop: "{{ out[7:] }}"
+     loop_control:
+       index_var: index
+
+     delegate_to: localhost

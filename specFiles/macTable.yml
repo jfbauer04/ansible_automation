@@ -1,0 +1,15 @@
+---
+vars: 
+  client: 
+    mac: "{{ item.client_mac }}"
+    switchport: "{{ item.switchport }}"
+    access_vlan: "{{item.vlan_id}}"
+
+keys:
+   clients:
+     value: "{{client}}"
+     items:  "^[\\s]+(?P<vlan_id>.*?)[\\s]+(?P<client_mac>.*?)[\\s]+(?P<state>.*?)[\\s]+(?P<switchport>.*(Te|Gi|Fa|Eth)*).*$"
+
+
+
+

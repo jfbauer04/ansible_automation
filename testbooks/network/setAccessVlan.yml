@@ -1,0 +1,51 @@
+---
+ - name: Change Access VLAN of switchports from the default
+   hosts: LabSwitch
+   gather_facts: no
+
+   tasks:
+   - name: GET THE INTS
+     ios_command:
+       commands: show int switchport
+     register: swp
+
+   - set_fact:
+        intlist: []
+
+   - set_fact:
+       intlist: "{{intlist + [item]}}"
+     with_items: "{{swp.stdout[0] | parse_cli('switchport.yml')}}"
+     when:
+       - "item.access_vlan != None"
+       - "item.name not in intlist"
+   - debug:
+       msg: "{{intlist }}"
+
+   - name: BACKUP CONFIG
+     ios_config:
+       backup: yes
+     register: running_config
+
+   - name: CHANGE SPECIFIED
+     ios_config:
+       lines:
+         - "switchport mode access"
+         - "switchport access vlan {{inputVlan}}"
+         - "no shutdown"
+       parents: "interface {{item}}"
+       save_when: never
+       defaults: no
+       running_config: "{{ lookup('file', running_config.backup_path) }}"
+     with_items: "{{inputInts}}"
+     when:
+#       - "item.access_vlan == '1 (default)'"
+       - "intlist[item.admin_mode] != 'trunk'"
+#       - "item.op_mode == 'down'"
+       - "intlist[item.op_mode] != 'trunk'"
+#       - "item.access_vlan != 'trunk'"
+
+   - name: SAVE CONFIG AFTER CHANGES ARE DONE
+     ios_config:
+       save_when: always
+
+##

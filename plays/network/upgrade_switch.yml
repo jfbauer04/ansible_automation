@@ -1,0 +1,14 @@
+---
+ - name: Test Switch Upgrade Roles
+   hosts:
+   vars_files:
+     - ../../vault
+     - ../../vars/swImages.yml
+
+   roles:
+      - check-switch
+      - {role: upgrade-switch, when: "ansible_net_version not in sw_models[found_model]['new_version']"}
+      - {role: post-upgrade-switch, when: "ansible_net_version not in sw_models[found_model]['new_version']"}
+
+
+#

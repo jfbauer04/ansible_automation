@@ -1,0 +1,26 @@
+---
+ - name: Syslog Configuration
+   hosts:
+   gather_facts: no
+   vars:
+     new_syslog_server:
+
+   tasks:
+
+   - name: APPEND CONFIG (ios)
+     ios_config:
+      lines:
+       - "logging host {{new_syslog_server}}"
+      save_when: always
+     when:
+      - ansible_network_os is defined
+      - "ansible_network_os == 'ios'"
+
+   - name: APPEND CONFIG (nxos)
+     nxos_config:
+      lines:
+       - logging host "{{new_syslog_server}}"
+      save_when: always
+     when:
+      - "ansible_network_os == 'nxos'"
+      - ansible_network_os is defined

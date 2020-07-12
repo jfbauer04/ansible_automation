@@ -1,0 +1,5 @@
+switches:
+ location1_2960:
+  - {interface: 'GigabitEthernet1/0/1', config_line: ['shutdown']}
+  - {interface: 'GigabitEthernet1/0/2', config_line: ['shutdown']}
+  - {interface: 'GigabitEthernet1/0/3', config_line: ['no shutdown','switchport access vlan 1999']}

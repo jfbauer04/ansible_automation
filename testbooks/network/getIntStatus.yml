@@ -1,0 +1,13 @@
+---
+ - name: Check Int Status
+   hosts:
+   gather_facts: no
+
+   tasks:
+   - name: SHOW INT STATUS
+     ios_command:
+       commands: show int status | i connected
+     register: status
+
+   - debug:
+       msg: "{{status.stdout_lines}}"

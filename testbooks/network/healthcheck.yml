@@ -1,0 +1,60 @@
+---
+ - name: health check
+   hosts: 
+   gather_facts: no
+   ignore_errors: yes
+   vars_prompt:
+   sw: "enter hostname"
+   tasks:
+   - setup:
+     delegate_to: "{{sw}}"
+#   - name: check firewall
+   - debug:
+       msg: "{{hostvars[sw]}}"
+   - set_fact:
+       grp: "{{vars[group_names[0]]}}"
+
+   - debug:
+       msg: "{{grp.Firewall}}"
+
+   - name: CHECK FIREWALL STATUS
+     command: ping "{{grp.Firewall}}" -c4
+     register: fw_ping
+     delegate_to: localhost
+
+   - name: CHECK PRIMARY CIRCUIT
+     command: ping "{{grp.Primary}}" -c4
+     register: pr_ping
+     delegate_to: localhost
+
+   - name: CHECK SECONDARY CIRCUIT
+     command: ping "{{grp.Secondary}}" -c4
+     register: sn_ping
+     delegate_to: localhost
+
+   - debug:
+       msg: "Primary Circuit Up"
+     when: pr_ping.rc == 0
+
+   - debug:
+       msg: "Secondary Circuit Up"
+     when: sn_ping.rc == 0
+
+   - debug:
+       msg: "Primary Circuit Down"
+     when: pr_ping.rc == 1
+
+   - debug:
+       msg: "Secondary Circuit Down"
+     when: sn_ping.rc == 1
+
+   - debug:
+       msg: "Both Circuits Down; Possible Power Outage"
+     when: pr_ping.rc == 1 and sn_ping.rc == 1
+
+   - debug:
+       msg: "Firewall Down"
+     when: pr_ping.rc == 0 and fw_ping.rc == 1
+   - debug:
+       msg: "Issue With Switch"
+     when: pr_ping.rc == 0 and fw_ping.rc == 0

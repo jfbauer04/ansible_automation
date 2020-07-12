@@ -1,0 +1,49 @@
+---
+ - name: FIND CLIENTS ON VLAN
+   hosts:
+   gather_facts: no
+   connection: network_cli
+   vars_files:
+     - /etc/ansible/vault
+
+   vars:
+     ansible_user: "{{vault_admin}}"
+     ansible_ssh_pass: "{{vault_adminPass}}"
+     fileOut: "/etc/ansible/output/vlan1-clients.csv"
+
+   tasks:
+   - gather_facts:
+       gather_subset: interfaces
+
+   - name: gather mac table info
+     ios_command:
+       commands: "show mac address-table vlan {{vlan_id}} | include Te|Gi|Fa|Eth"
+     register: mtable
+
+   - name: CREATE INVENTORY FILES
+     file:
+       path: "{{ fileOut }}"
+       state: touch
+     delegate_to: localhost
+     run_once: yes
+
+   - name: CREATE CSV HEADERS
+     lineinfile:
+       path: "{{ fileOut }}"
+       line: "switch,vlan,switch,switchport"
+       insertafter: HOF
+     delegate_to: localhost
+     run_once: yes
+
+   - name: APPEND DATA
+     lineinfile:
+       dest: "{{ fileOut }}"
+       line: '{{inventory_hostname}},{{ansible_host}},{{item.stdout[0] | regex_replace("[\s]{2,}", ",")}}'
+       insertafter: EOF
+     delegate_to: localhost
+#   - debug:
+#       msg: '{{(item.stdout[0] | regex_replace("[\s]{2,}", ",")).split(",")}}'
+#        msg: '{{item.stdout[0] | parse_cli("/etc/ansible/specFiles/macTable.yml")}}'
+     with_items: "{{mtable.results}}"
+     when: "{{item != ''}}"
+#

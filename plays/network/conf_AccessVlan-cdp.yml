@@ -1,0 +1,70 @@
+---
+ - name: Meet the Neighbors
+   hosts:
+   gather_facts: no
+   vars_prompt:
+     inp_vlan: "Enter your VLAN\n"
+
+   tasks:
+   - name: SH CDP
+     ios_command:
+       commands: sh cdp neigh det
+     register: neighbors
+
+   - name: GET THE INTS
+     ios_command:
+       commands: show int switchport
+     register: swp
+
+   - set_fact:
+        intlist: []
+
+   - set_fact:
+       intlist: "{{intlist + [item]}}"
+     with_dict: "{{swp.stdout[0] | parse_cli('/etc/ansible/specFiles/switchport.yml')}}"
+     when:
+       - "item.value.access_vlan == '1 (default)'"
+       - "item not in intlist"
+
+   - set_fact:
+       neighbor_list: []
+
+   - set_fact:
+       neighbor_list: "{{neighbor_list + [item]}}"
+     with_items: "{{neighbors.stdout[0] | parse_cli('/etc/ansible/specFiles/cdpNeighbors.yml')}}"
+     when:
+        - " 'IP Phone' in  item.platform"
+        - " item.secondport_status == 'Down'"
+
+   - debug:
+       msg: "{{(intlist | items2dict)[item.switchport].name}}"
+     with_items: "{{neighbor_list}}"
+     when: "item.switchport in (intlist | items2dict)"
+
+   - name: BACKUP CONFIG
+     ios_config:
+       backup: yes
+     register: running_config
+
+   - name: CHANGE QUALIFYING PORTS TO INPUT VLAN
+     ios_config:
+       lines:
+         - "switchport mode access"
+         - "switchport access vlan {{inp_vlan}}"
+       parents: "interface {{(intlist | items2dict)[item.switchport].name}}"
+       save_when: never
+       defaults: no
+       running_config: "{{ lookup('file', running_config.backup_path) }}"
+     with_items: "{{neighbor_list}}"
+     when: "item.switchport in (intlist | items2dict)"
+
+   - name: SAVE CONFIG AFTER CHANGES ARE DONE
+     ios_config:
+       save_when: always
+
+
+#"{{(intlist | items2dict)[item.switchport].access_vlan}}"
+#     with_items: "{{neighbors.stdout[0] | parse_cli('/etc/ansible/specFiles/cdpNeighbors.yml')}}"
+#     when:
+#        - " 'IP Phone' in  item.platform"
+#        - " item.secondport_status == 'Down#'"

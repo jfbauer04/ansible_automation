@@ -1,0 +1,9 @@
+---
+ - name: Gather Junos Facts
+   hosts: juniperTesting
+   connection: network_cli
+   tasks:
+   - name: check Juniper Router Facts
+     junos_facts:
+   - debug:
+       msg: "{{ansible_net_facts}}"

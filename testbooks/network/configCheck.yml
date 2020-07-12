@@ -1,0 +1,17 @@
+---
+ - name: Render IOS Config
+   hosts:
+   gather_facts: yes
+   vars_files:
+
+   tasks:
+   - name: get the facts
+     ios_facts:
+
+   - name: render a Jinja2 template onto an IOS device
+     ios_config:
+       backup: yes
+       src:  ./lab.j2
+       save_when: never
+     vars:
+       ansible_command_timeout: 180

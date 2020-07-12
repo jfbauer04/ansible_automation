@@ -1,0 +1,38 @@
+---
+ - name: Change an Access Port via AWX
+   hosts: LabSwitch
+   gather_facts: no
+   vars:
+     ints_in: [ Gi1/0/16,Gi1/0/17]
+     vlan: 123
+     mode: access
+     state: no shutdown
+   tasks:
+   - name: CHECK THE PORT
+     ios_command:
+       commands: "show int switchport"
+     register: checkPort
+
+   - set_fact:
+       intList: "{{checkPort.stdout[0] | parse_cli('../../specFiles/switchport.yml')}}"
+
+   - debug:
+       msg: "{{item }}"
+     with_dict: "{{intList | unique}}"
+     when:
+       - "item.key in ints_in"
+       - "item.value.op_mode != 'trunk'"
+
+   - name: RENDER NEW CONFIG
+     ios_config:
+#       src: ../../templates/acc_ints.j2
+       lines:
+         - no shutdown
+         - switchport mode access
+         - "switchport access vlan {{vlan}}"
+       save_when: never
+       parents: "interface {{item.key}}"
+     with_dict: "{{intList | unique}}"
+     when:
+       - "item.key in ints_in"
+       - "item.value.op_mode != 'trunk'"

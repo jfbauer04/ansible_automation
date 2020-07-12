@@ -1,0 +1,37 @@
+---
+# tasks file for standardize-config
+- set_fact:
+    path_intended: "../templates/{{group_name[0]}}.j2"
+    conf_intended: "{{lookup('template',path_intended)}}"
+
+- debug:
+    msg: "{{item}}"
+  with_items: "{{switches[inventory_hostname]}}"
+
+- name: BACKUP CONFIG
+  ios_config:
+    backup: yes
+
+- name: DIFFERENT THAN INTENDED?
+  ios_config:
+    diff_against: intended
+    intended_config: conf_intended
+  register: diff_check
+
+- name: UPDATE CONFIG WHEN CHANGED
+  ios_config:
+    diff_against: intended
+    intended_config: conf_intended
+    src: test.j2
+    save_when: modified
+  register: applied
+  when: diff_check.changed
+
+- name: BACKUP NEW CONFIG AS MASTER
+  ios_config:
+    backup: yes
+    backup_options:
+      filename: "{{inventory_hostname}}-master.conf"
+      dir_path: ./master-configs
+  when: diff_check.changed
+

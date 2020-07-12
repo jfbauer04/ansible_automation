@@ -1,0 +1,24 @@
+---
+vars: 
+  Neighbor: 
+    id: "{{ item[0].id }}"
+    platform: "{{ item[1].platform }}"
+    switchport: "{{ item[2].switchport_type }}{{item[2].number}}"
+    secondport_status: "{{ item[3].spStat }}"
+    ipv4: "{{ item[4].ipv4 }}"
+
+keys:
+   Neighbors:
+     value: "{{Neighbor}}"
+     start_block: "^Device ID:"
+     end_block: "^-------------------------"
+     items: 
+       - "^Device ID:\\s+(?P<id>.*)"
+       - "Platform:\\s+(?P<platform>.*),"
+       - "Interface:\\s+(?P<switchport_type>(Gi|Te|Fa)).+Ethernet(?P<number>.+),"
+#       - "Interface:\\s+(?P<switchport>.+),"
+       - "Second Port Status:\\s+(?P<spStat>.+)"
+       - "\\s*IP address:\\s*(?P<ipv4>.+)"
+
+
+

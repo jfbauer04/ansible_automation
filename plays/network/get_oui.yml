@@ -1,0 +1,25 @@
+---
+ - name: Find a Mac Address
+   hosts:
+   gather_facts: no
+   connection: network_cli
+   vars_prompt:
+     - name: mac_in
+       prompt: "Enter the Mac Address or OUI to find"
+       private: no
+   vars_files:
+     - /etc/ansible/vault
+   vars:
+     ansible_user: "{{vault_admin}}"
+     ansible_ssh_pass: "{{vault_adminPass}}"
+   tasks:
+
+
+   - name: gather mac tables info
+     ios_command:
+       commands: "show mac address-table | include {{mac_in}}.*(Gi|Fa|Eth)"
+     register: mac_out
+   - set_fact:
+      test2: '{{(mac_out.stdout[0] | regex_replace("[\s]{2,}", ","))}}'
+   - debug:
+      msg: "{{test2}}"

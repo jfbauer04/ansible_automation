@@ -1,0 +1,7 @@
+{% for i in inp %}
+interface {{i}}
+ switchport mode {{mode}}
+ switchport access vlan {{vlan}}
+ {{state}}
+!
+{%endfor%}

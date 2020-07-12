@@ -1,0 +1,27 @@
+---
+ - name: Add Radius Authentication to IOS Devices
+   hosts:
+   vars_files: ../../vault
+
+   tasks:
+   - name: CONFIGURE NEW RADIUS SERVER
+     ios_config:
+       lines:
+         - address ipv4 {{vault_v4RadiusServer}} auth-port 1645 acct-port 1646
+         - retransmit 3
+         - key {{vault_radiusKey}}
+       parents: radius server {{radius_server}}
+
+   - name: ADD RADIUS SERVER TO AAA
+     ios_config:
+       lines:
+         - "server name {{radius_server}}"
+         - ip vrf forwarding mgmt
+       parents: "aaa group server radius {{radius_server}}"
+
+   - name: ADD RADIUS AUTHENTICATION
+     ios_config:
+       lines:
+         - "aaa authentication login default group {{radius_server}} local"
+         - "aaa authorization exec default group {{radius_server}} local"
+         - aaa session-id common

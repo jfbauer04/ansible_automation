@@ -1,0 +1,41 @@
+---
+ - name: SHUTDOWN ALL ACCESS PORTS
+   hosts: LabSwitch
+   gather_facts: no
+
+   tasks:
+   - name: GET THE INTS
+     ios_command:
+       commands: show int switchport
+     register: swp
+
+   - set_fact:
+        intlist: []
+
+   - set_fact:
+       intlist: "{{intlist + [item]}}"
+     with_dict: "{{swp.stdout[0] | parse_cli('../../specFiles/switchport.yml')}}"
+     when:
+       - "(item.value.admin_mode == 'static access') or (item.value.admin_mode == 'dynamic auto') "
+       - "item.value.op_mode == 'down'"
+   - debug:
+       msg: "{{intlist }}"
+
+   - name: BACKUP CONFIG
+     ios_config:
+       backup: yes
+     register: running_config
+
+   - set_fact:
+       conf_intended: "{{lookup('template','../../shutInterfaces.j2')}}"
+   - debug:
+       msg: "{{conf_intended}}"
+
+   - name: UPDATE CONFIG WHEN CHANGED
+     ios_config:
+       src: "../../shutInterfaces.j2"
+       save_when: modified
+     register: applied
+
+   - debug:
+       msg: "{{applied}}"

@@ -1,0 +1,58 @@
+---
+ - name: Get List of Networks on Core Devices
+   hosts:
+   gather_facts: no
+
+   tasks:
+   - name: GET THE (NX) FACTS
+     nxos_facts:
+       gather_subset: interfaces
+     when: ansible_network_os == 'nxos'
+
+   - name: GET THE (CAT) FACTS
+     ios_facts:
+       gather_subset: interfaces
+     when: ansible_network_os == 'ios'
+
+   - set_fact:
+       fileOut: "/etc/ansible/output/{{inventory_hostname}}-networks.csv"
+
+   - name: CREATE INVENTORY FILE IF NONEXISTENT
+     file:
+       path: "{{ fileOut }}"
+       state: touch
+#     run_once:
+     delegate_to: localhost
+
+   - name: CREATE CSV HEADERS
+     lineinfile:
+       path: "{{ fileOut }}"
+       line: "vlan,description,ip address,mask length"
+       insertafter: HOF
+     delegate_to: localhost
+
+   - name: APPEND DATA
+     lineinfile:
+       dest: "{{ fileOut }}"
+       line:  "{{item['key']}},{{item['value']['description']}},{{item['value']['ipv4']['address']}},{{item['value']['ipv4']['masklen']}}"
+       insertafter: EOF
+     delegate_to: localhost
+     when: "'Vlan' in item['key'] and 'ipv4' in item['value'] and ansible_network_os == 'nxos'"
+     with_dict: "{{ansible_net_interfaces}}"
+
+   - debug:
+       msg: "{{item['value']['ipv4'][0]['address']}}"
+     with_dict: "{{ansible_net_interfaces}}"
+     when: "item['value'] != '' and 'Vlan' in item['key'] and 'ipv4' in item['value'] and item['value']['ipv4'] != [] and ansible_network_os == 'ios'"
+
+
+   - name: APPEND DATA
+     lineinfile:
+       dest: "{{ fileOut }}"
+       line:  "{{item['key']}},{{item['value']['description']}},{{item['value']['ipv4'][0]['address']}},{{item['value']['ipv4'][0]['subnet']}}"
+       insertafter: EOF
+     delegate_to: localhost
+     when: "item['value'] != '' and 'Vlan' in item['key'] and 'ipv4' in item['value'] and item['value']['ipv4'] != [] and ansible_network_os == 'ios'"
+
+
+     with_dict: "{{ansible_net_interfaces}}"

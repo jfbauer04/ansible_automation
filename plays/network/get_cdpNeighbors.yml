@@ -1,0 +1,30 @@
+---
+ - name: Get CDP Neighbors
+   hosts: switch
+   gather_facts: no
+   vars:
+    fileOut:
+
+   tasks:
+   - name: MEET THE NEIGHBORS
+     ios_facts:
+      gather_subset: '!hardware'
+
+   - name: CREATE OUTPUT FILE
+     file:
+         path: "/etc/ansible/output/{{fileOut}}.csv"
+         state: touch
+     delegate_to: localhost
+
+   - name: CREATE HEADER
+     lineinfile:
+       dest: "/etc/ansible/output/{{fileOut}}.csv"
+       line: "host,neighbor"
+       insertafter: HOF
+     delegate_to: localhost
+
+   - name: APPEND DATA
+     lineinfile:
+       dest: ""/etc/ansible/output/{{fileOut}}.csv"
+       line: "{{ansible_net_hostname}}, {{item.value[0]['host'].split('.ihi.local')[0]}},"
+     with_dict: "{{ansible_facts['net_neighbors'] }}"

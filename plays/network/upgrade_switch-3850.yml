@@ -1,0 +1,108 @@
+---
+- name: UPGRADE 3850
+  hosts:
+  gather_facts: no
+  vars:
+    ansible_command_timeout: 3000
+
+  tasks:
+   - debug:
+        msg: "{{new_bin}}"
+
+   - name: GATHER SWITCH FACTS
+     ios_facts:
+
+   - set_fact:
+        stack_size: "{{ ansible_net_stacked_serialnums | length }}"
+
+   - name: SHOW SWITCH BEFORE UPGRADE
+     ios_command:
+        commands: show switch detail
+     register: sw_old
+
+   - set_fact:
+      sw_old: "{{sw_old['stdout_lines'] | flatten | join('\n')}}"
+
+   - name: SHOW INT STATUS BEFORE UPGRADE
+     ios_command:
+       commands: show int status
+     register: int_old
+   - set_fact:
+      int_old: "{{int_old['stdout_lines'] | flatten | join('\n')}}"
+
+
+   - name: UPGRADE IOS IMAGE IF NOT COMPLIANT
+     block:
+     - name: CLEAN UNNECESSARY PACKAGES
+       ios_command:
+        commands: "software clean\nyes"
+     - name: COPY OVER IOS IMAGE
+       ios_command:
+          commands:
+             - command: "copy ftp://ansible:{{vault_ftpPass}}@{{repo}}://images/{{ new_bin }}.bin flash:"
+               prompt: '[{{ new_bin }}]'
+               answer: "\r]"
+
+     - name: EXPAND SOFTWARE
+       ios_command:
+          commands:
+             - command: "software expand file flash:{{new_bin}}.bin"
+
+     - name: CONTINUE UPGRADE
+       block:
+       - name: CONFIGURE BOOT SETTINGS
+         ios_config:
+           lines:
+            - "no boot system"
+            - "boot system switch all flash:{{ new_bin }}.conf"
+           save_when: always
+
+     - name: RELOAD SWITCH
+       ios_command:
+         commands:
+           - "reload in 1\ny"
+
+     - name: WAIT FOR SWITCH TO RETURN
+       retries: 6
+       wait_for_connection:
+         delay: 860
+         timeout: 800
+
+
+     - name: GATHER SWITCH FACTS FOR VERIFICATION
+       ios_facts:
+     - debug:
+         msg: "The new IOS version is {{ ansible_net_version }}"
+
+     - name: SHOW SWITCH AFTER
+       ios_command:
+         commands: show switch detail
+       register: sw_new
+
+     - set_fact:
+        sw_nwq: "{{sw_new['stdout_lines'] | flatten | join('\n')}}"
+
+     - name: SHOW INT STATUS AFTER
+       ios_command:
+         commands: show int status
+       register: int_new
+
+     - set_fact:
+        int_nwq: "{{int_new['stdout_lines'] | flatten | join('\n')}}"
+
+     - set_fact:
+        int_new: "no diffs to show"
+       when: int_new == int_old
+
+     - name: EMAIL NEW CONFIG
+       mail:
+        host: smtp.ihi.local
+        port: 25
+        username: "Ansible"
+        from:
+        password:
+        to:
+        subject: Upgrade Report  "{{ansible_net_hostname}}  ({{ansible_host}})"
+        body: "show switch detail:\n{{sw_nwq }}\n\nshow int status:\n{{int_nwq}}"
+
+     when: ansible_net_image !=
