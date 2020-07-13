@@ -1,2 +1,4 @@
 ---
 # vars file for intfo
+intlist: []
+specPath: "{{role_path}}/../../specFiles/"
