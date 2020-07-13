@@ -1,0 +1,13 @@
+---
+# tasks file for cdp-info
+- name: SH CDP
+  ios_command:
+    commands: sh cdp neigh det
+  register: neighbors
+
+- set_fact:
+    neighbor_list: []
+
+- set_fact:
+   neighbor_list: "{{neighbor_list + [item]}}"
+  with_items: "{{neighbors.stdout[0] | parse_cli('/etc/ansible/specFiles/cdpNeighbors.yml')}}"
