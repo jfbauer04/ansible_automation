@@ -32,6 +32,7 @@
        lines:
          - "switchport mode access"
          - "switchport access vlan {{vlan}}"
+         
        parents: "interface {{item}}"
        save_when: never
        defaults: no

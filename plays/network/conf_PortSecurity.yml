@@ -5,12 +5,20 @@
    gather_facts: no
 
    tasks:
-#   - name: GATHER INTERFACES
-#     ios_facts:
-#       gather_subset: 'interfaces'
-#   - debug:
-#       msg: "{{item}}"
-#     with_items: "{{ansible_net_interfaces}}"
+   - name: GET THE INTS
+     ios_command:
+       commands: show int switchport
+     register: swp
+
+   - set_fact:
+        intlist: []
+
+   - set_fact:
+       intlist: "{{intlist + [item]}}"
+     with_dict: "{{swp.stdout[0] | parse_cli('../../specFiles/switchport.yml')}}"
+     when:
+       - "item.value.access_vlan != None"
+       - "item.value.name not in intlist"
 
    - name: BACKUP CURRENT CONFIG
      ios_config:
@@ -18,28 +26,13 @@
        backup_options:
          dir_path: "/etc/ansible/output/backups"
          filename: "{{inventory_hostname}}"
-   - name: CONFIGURE ERR DISABLE
-     ios_config:
-       lines:
-         - errdisable recovery cause psecure-violation
-         - errdisable recovery interval 180
-       save_when: always
-       running_config: "/etc/ansible/output/parking/{{inventory_hostname}}"
 
-   - name: SECURE THE PORTS
+   - name: APPLY PORT SECURITY TEMPLATE
      ios_config:
-       lines:
-         - switchport mode access
-         - switchport port-security
-         - switchport port-security mac-address sticky
-         - switchport port-security violation shutdown
-         - switchport port-security maximum 2
-
-       save_when: always
-       parents: "interface range GigabitEthernet1/1-24"
-#       diff_against: "/etc/ansible/output/parking/{{inventory_hostname}}"
-       running_config: "/etc/ansible/output/parking/{{inventory_hostname}}"
-#     with_items: "{{ansible_net_interfaces}}"
+       src: '../../templates/portSecurity.j2'
+       save_when: never
+       defaults: no
+       running_config: "{{ lookup('file', running_config.backup_path) }}"
 
    - name: VERIFY PORT SECURITY
      ios_command:
@@ -47,3 +40,7 @@
      register: pSecurity
    - debug:
        msg: "{{pSecurity.stdout_lines}}"
+
+   - name: POST CHANGE SAVE FOR SPEED
+     ios_config:
+       save_when: always

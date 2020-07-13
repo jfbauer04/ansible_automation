@@ -1,0 +1,13 @@
+errdisable recovery cause psecure-violation
+errdisable recovery interval 180
+
+{% for i in (intlist | unique) %}
+{% if i.value.admin_mode == 'static access'
+interface {{i.key}}
+  switchport mode access
+  switchport port-security
+  switchport port-security mac-address sticky
+  switchport port-security violation shutdown
+  switchport port-security maximum 2
+{%endif%}
+{%endfor%}
