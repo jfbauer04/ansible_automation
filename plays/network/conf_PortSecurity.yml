@@ -1,24 +1,13 @@
 ---
  - name: Enable Port Security
-   hosts:
+   hosts: sw1
    connection: network_cli
    gather_facts: no
 
+   roles:
+     - intfo
+
    tasks:
-   - name: GET THE INTS
-     ios_command:
-       commands: show int switchport
-     register: swp
-
-   - set_fact:
-        intlist: []
-
-   - set_fact:
-       intlist: "{{intlist + [item]}}"
-     with_dict: "{{swp.stdout[0] | parse_cli('../../specFiles/switchport.yml')}}"
-     when:
-       - "item.value.access_vlan != None"
-       - "item.value.name not in intlist"
 
    - name: BACKUP CURRENT CONFIG
      ios_config:
@@ -32,14 +21,12 @@
        src: '../../templates/portSecurity.j2'
        save_when: never
        defaults: no
-       running_config: "{{ lookup('file', running_config.backup_path) }}"
+
 
    - name: VERIFY PORT SECURITY
      ios_command:
        commands: show port-security
      register: pSecurity
-   - debug:
-       msg: "{{pSecurity.stdout_lines}}"
 
    - name: POST CHANGE SAVE FOR SPEED
      ios_config:

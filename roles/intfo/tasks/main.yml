@@ -11,8 +11,3 @@
 - set_fact:
     intlist: "{{intlist + [item]}}"
   with_dict: "{{swp.stdout[0] | parse_cli('../../specFiles/switchport.yml')}}"
-  when:
-    - "item.value.access_vlan"
-    - "item.key not in intlist"
-- debug:
-    msg: "{{intlist }}"
