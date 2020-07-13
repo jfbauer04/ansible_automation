@@ -7,7 +7,7 @@
 
 - set_fact:
      intlist: []
-
+     specFile: "{{role_path}}/../../specFiles/switchport.yml"
 - set_fact:
     intlist: "{{intlist + [item]}}"
-  with_dict: "{{swp.stdout[0] | parse_cli('../../specFiles/switchport.yml')}}"
+  with_dict: "{{swp.stdout[0] | parse_cli(specFile)}}"

@@ -1,30 +1,20 @@
 ---
  - name: Meet the Neighbors
-   hosts:
+   hosts: sw1
    gather_facts: no
    vars_prompt:
-     inp_vlan: "Enter your VLAN\n"
+     - name: inp_vlan
+       prompt: "Enter your VLAN"
+       private: no
 
+   roles:
+    - intfo
    tasks:
    - name: SH CDP
      ios_command:
        commands: sh cdp neigh det
      register: neighbors
 
-   - name: GET THE INTS
-     ios_command:
-       commands: show int switchport
-     register: swp
-
-   - set_fact:
-        intlist: []
-
-   - set_fact:
-       intlist: "{{intlist + [item]}}"
-     with_dict: "{{swp.stdout[0] | parse_cli('/etc/ansible/specFiles/switchport.yml')}}"
-     when:
-       - "item.value.access_vlan == '1 (default)'"
-       - "item not in intlist"
 
    - set_fact:
        neighbor_list: []

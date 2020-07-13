@@ -6,15 +6,8 @@
 
    roles:
      - intfo
-
+     - backup
    tasks:
-
-   - name: BACKUP CURRENT CONFIG
-     ios_config:
-       backup: yes
-       backup_options:
-         dir_path: "/etc/ansible/output/backups"
-         filename: "{{inventory_hostname}}"
 
    - name: APPLY PORT SECURITY TEMPLATE
      ios_config:
