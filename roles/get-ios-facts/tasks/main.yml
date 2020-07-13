@@ -1,0 +1,14 @@
+---
+# tasks file for get-ios-facts
+   - name: GATHER IOS FACTS
+     ios_facts:
+       gather_subset: all
+     when: ansible_network_os == 'ios'
+
+   - name: GATHER NXOS FACTS
+     nxos_facts:
+       gather_subset: all
+     when: ansible_network_os == 'nxos'
+
+   - set_fact:
+       stack_size: "{{ ansible_net_stacked_serialnums | length }}"
