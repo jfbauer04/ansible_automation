@@ -1,0 +1,12 @@
+---
+ - name: test vlan spec file
+   hosts: sw1
+   gather_facts: no
+
+   tasks: 
+   - name: get vlans
+     ios_command: 
+        commands: show vlan brief
+     register: vlan_out
+   - debug: 
+      msg: "{{vlan_out.stdout[0] | parse_cli('../../specFiles/vlans.yml')}}"

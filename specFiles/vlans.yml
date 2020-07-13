@@ -1,0 +1,19 @@
+---
+vars:
+  vlan:
+    key: "{{item.vlan_id}}"
+    values:
+      name: "{{ item.vlan_name }}"
+      state: "{{ item.state }}"
+      interfaces: "{{ item.vlan_ints }}"
+
+keys:
+   vlans:
+     value: "{{vlan}}"
+     # start_block: "\\d+"
+     #     end_block: "$"
+     #     items: "^(?P<vlan_id>\\d*[^\\s*])\\s+(?P<vlan_name>\\S*)\\s+(?P<state>\\S*)\\s+($|(?P<vlan_ints>(.*$)))"
+     items: "(?P<vlan_id>^\\d*[^\\s*])\\s+(?P<vlan_name>\\S*)\\s+(?P<state>\\S*)(\\s+$|(\\s+(?P<vlan_ints>.*$)))"   
+   
+
+
