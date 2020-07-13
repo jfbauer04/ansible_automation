@@ -6,7 +6,7 @@
 
    roles:
      - intfo
-     - backup
+     - ios_backup
    tasks:
 
    - name: APPLY PORT SECURITY TEMPLATE
