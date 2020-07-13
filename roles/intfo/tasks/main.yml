@@ -1,19 +1,18 @@
 ---
 # tasks file for intfo
 - name: GET THE INTS
-  ios_command: 
+  ios_command:
     commands: show int switchport
   register: swp
- 
-- set_fact:
-     intlist: []    
 
-- set_fact: 
+- set_fact:
+     intlist: []
+
+- set_fact:
     intlist: "{{intlist + [item]}}"
-  with_items: "{{swp.stdout[0] | parse_cli('spec.yml')}}"
-  when: 
-    - "item.access_vlan != None"
-    - "item.name not in intlist"
+  with_dict: "{{swp.stdout[0] | parse_cli('../../specFiles/switchport.yml')}}"
+  when:
+    - "item.value.access_vlan"
+    - "item.key not in intlist"
 - debug:
     msg: "{{intlist }}"
-
