@@ -7,4 +7,4 @@
 
 - set_fact:
     intlist: "{{intlist + [item]}}"
-  with_dict: "{{swp.stdout[0] | parse_cli(specFile)}}"
+  with_dict: "{{swp.stdout[0] | parse_cli(specPath/switchport.yml)}}"
